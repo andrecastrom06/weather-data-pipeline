@@ -8,10 +8,10 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 
 def create_df() -> pd.DataFrame:
-    path = Path(__file__).parent.parent / 'data' / 'raw_data.json'
+    path = Path(__file__).parent.parent / 'data' / 'bronze_olinda_weather.json'
 
     if not path.exists():
-        raise FileNotFoundError("Arquivo raw_data.json não encontrado na camada Bronze")
+        raise FileNotFoundError("Arquivo bronze_olinda_weather.json não encontrado na camada Bronze")
 
     try:
         with open(path, encoding="utf-8") as f:
@@ -102,7 +102,8 @@ def load_bd(df: pd.DataFrame):
             name='silver_olinda_weather',
             con=engine,
             if_exists='append',
-            index=False
+            index=False,
+            method='multi'
         )
     except Exception as e:
         raise ConnectionError(f"Erro ao inserir dados no banco: {e}")

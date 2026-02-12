@@ -34,7 +34,7 @@ def bronze() -> dict:
         if not data:
             raise ValueError("Nenhum dado retornado pela API")
 
-        output_path = Path("data/raw_data.json")
+        output_path = Path("data/bronze_olinda_weather.json")
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
         with open(output_path, 'w', encoding='utf-8') as f:
