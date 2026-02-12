@@ -20,7 +20,7 @@ if not all([user, password_raw, host, port, db]):
 
 password = quote_plus(password_raw)
 
-DATABASE_URL = f"postgresql+psycopg://{user}:{password}@{host}:{port}/{db}"
+DATABASE_URL = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{db}"
 
 def create_db_engine():
     try:
@@ -35,7 +35,7 @@ def create_db_engine():
 
     except ImportError:
         raise ImportError(
-            "❌ Driver não encontrado. Rode: pip install psycopg[binary]"
+            "❌ Driver não encontrado. Rode: pip install psycopg2-binary"
         )
 
     except Exception as e:
