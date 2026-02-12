@@ -13,4 +13,6 @@
 
 ## Como acessar o banco?
 - docker exec -it etl-postgres-1 psql -U airflow -d airflow
-- Pode fazer a consulta
+- SELECT * 
+FROM silver_olinda_weather
+LIMIT 10;
