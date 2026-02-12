@@ -42,20 +42,29 @@ Arquivo: `medallion/silver.py`
   - `silver_olinda_weather`
 
 ### Gold (Transformação + Carga)
-Arquivo: `medallion/silver.py`
+Arquivo: `medallion/gold.py`
 
-- Lê o JSON da camada bronze.
-- Normaliza colunas aninhadas (inclusive `weather`).
-- Renomeia campos para padrão mais analítico.
-- Converte timestamps para timezone `America/Sao_Paulo`.
+- Lê os dados tratados da camada Silver (silver_olinda_weather).
+- Converte datetime para tipo data.
+- Agrupa os dados por:
+    `date`
+    `sys_country`
+- Calcula métricas agregadas diárias:
+    `Temperatura mínima, média e máxima.`
+    `Umidade média.`
+    `Pressão média.`
+    `Velocidade média do vento.`
+- Identifica o clima predominante do dia:
+    `dominant_weather_main`
+    `dominant_weather_description`
 - Grava no Postgres em:
-  - `silver_olinda_weather`
+    `gold_olinda_weather_daily`
 
 ### Orquestração (Airflow)
 Arquivo: `dags/weather_dag.py`
 
 - DAG: `weather_pipeline`
-- Frequência: **de hora em hora** (`0 * * * *`)
+- Frequência: **a cada 5 minutos** (`*/5 * * * *`)
 - Ordem das tasks:
   1. `bronze_layer`
   2. `silver_layer`
@@ -150,8 +159,14 @@ Consulta rápida:
 ```sql
 SELECT *
 FROM silver_olinda_weather
-LIMIT 10;
 ORDER BY datetime DESC
+LIMIT 10;
+```
+
+```sql
+SELECT *
+FROM gold_olinda_weather_daily
+ORDER BY date DESC
 LIMIT 10;
 ```
 
