@@ -1,0 +1,2 @@
+def silver():
+    print("ola")
