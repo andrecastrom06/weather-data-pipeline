@@ -41,7 +41,7 @@ Arquivo: `medallion/silver.py`
 - Grava no Postgres em:
   - `silver_olinda_weather`
 
-### Gold (Transformação + Carga)
+### Gold (Agregação de valores analíticos)
 Arquivo: `medallion/gold.py`
 
 - Lê os dados tratados da camada Silver (silver_olinda_weather).
