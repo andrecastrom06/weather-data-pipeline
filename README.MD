@@ -1,12 +1,12 @@
-# 🌦️ Weather Data Pipeline (Olinda/PE)
+# Weather Data Pipeline (Olinda/PE)
 
-Pipeline de dados climáticos com arquitetura **Medallion (Bronze → Silver → Gold)**, orquestrado com **Apache Airflow** e persistido em **PostgreSQL**.
+Pipeline de dados climáticos com arquitetura **Medallion (Bronze -> Silver -> Gold)**, orquestrado com **Apache Airflow** e persistido em **PostgreSQL**.
 
-Este projeto coleta dados atuais de clima da API **OpenWeatherMap** para a cidade de **Olinda/BR**, normaliza o payload JSON e grava os dados tratados em tabela relacional para análise.
+Este projeto coleta dados atuais de clima da API **OpenWeatherMap** para a cidade de **Olinda/BR**, normaliza o payload JSON e grava os dados tratados em tabela relacional para análise. Finalizando com **Machine Learning** para fazer a previsão da temperatura nos próximos minutos ou horas.
 
 ---
 
-## ✅ Tecnologias utilizadas
+## Tecnologias utilizadas
 
 - **Python 3.12+**
 - **Apache Airflow 3 (CeleryExecutor)**
@@ -14,14 +14,19 @@ Este projeto coleta dados atuais de clima da API **OpenWeatherMap** para a cidad
 - **PostgreSQL 16**
 - **Redis** (broker do Celery)
 - **Pandas**
+- **NumPy**
 - **SQLAlchemy**
 - **Requests**
 - **python-dotenv**
+- **pyarrow**
+- **scikit-learn**
+- **XGBoost**
+- **LightGBM**
 - **Arquitetura Medallion**
 
 ---
 
-## 🧱 Arquitetura do pipeline
+## Arquitetura do pipeline
 
 ### Bronze (Extração)
 Arquivo: `medallion/bronze.py`
@@ -35,7 +40,7 @@ Arquivo: `medallion/bronze.py`
 Arquivo: `medallion/silver.py`
 
 - Lê o JSON da camada bronze.
-- Normaliza colunas aninhadas (inclusive `weather`).
+- Normaliza colunas aninhadas.
 - Renomeia campos para padrão mais analítico.
 - Converte timestamps para timezone `America/Sao_Paulo`.
 - Grava no Postgres em:
@@ -44,21 +49,21 @@ Arquivo: `medallion/silver.py`
 ### Gold (Agregação de valores analíticos)
 Arquivo: `medallion/gold.py`
 
-- Lê os dados tratados da camada Silver (silver_olinda_weather).
+- Lê os dados tratados da camada Silver (`silver_olinda_weather`).
 - Converte datetime para tipo data.
 - Agrupa os dados por:
-    `date`
-    `sys_country`
+  - `date`
+  - `sys_country`
 - Calcula métricas agregadas diárias:
-    `Temperatura mínima, média e máxima.`
-    `Umidade média.`
-    `Pressão média.`
-    `Velocidade média do vento.`
+  - `temperature_min`, `temperature_avg`, `temperature_max`
+  - `humidity_avg`
+  - `pressure_avg`
+  - `wind_speed_avg`
 - Identifica o clima predominante do dia:
-    `dominant_weather_main`
-    `dominant_weather_description`
+  - `dominant_weather_main`
+  - `dominant_weather_description`
 - Grava no Postgres em:
-    `gold_olinda_weather_daily`
+  - `gold_olinda_weather_daily`
 
 ### Orquestração (Airflow)
 Arquivo: `dags/weather_dag.py`
@@ -72,29 +77,65 @@ Arquivo: `dags/weather_dag.py`
 
 ---
 
-## 📁 Estrutura do projeto
+## Machine Learning (Previsão de temperatura)
+
+Arquivo: `ml/preview_temperature.py`
+
+Foi implementado um fluxo de **previsão de temperatura de curto prazo (30, 60, 120 e 180 minutos)** com regressão de serie temporal.
+
+### O que o script faz
+
+- Lê dados historicos da tabela `silver_olinda_weather`.
+- Cria variáveis de entrada com:
+  - Lags de `temperature`, `humidity`, `pressure`, `wind_speed`
+  - Hora do dia (`hour`)
+  - Dia da semana (`day_of_week`)
+- Cria o alvo `target_temperature` para cada horizonte futuro.
+- Faz split temporal treino/teste (sem embaralhar).
+- Treina e compara os modelos:
+  - `LinearRegression` (baseline)
+  - `XGBoost`
+  - `LightGBM`
+- Avalia com metricas:
+  - `MAE` Média do erro absoluto: media(|real - previsto|).
+  - `RMSE` Raiz da média do erro ao quadrado: sqrt(media((real - previsto)^2)).
+- Exibe o melhor modelo por horizonte (menor RMSE).
+
+### Como executar
+
+```bash
+python ml/preview_temperature.py
+```
+
+> Observação: para ter previsões estáveis, a tabela `silver_olinda_weather` precisa de histórico suficiente (na prática, várias coletas ao longo do dia).
+
+---
+
+## Estrutura do projeto
 
 ```bash
 .
-├── dags/
-│   └── weather_dag.py
-├── data/
-│   └── bronze_olinda_weather.json
-├── medallion/
-│   ├── bronze.py
-│   ├── silver.py
-│   ├── gold.py
-│   └── utils/
-│       └── connection.py
-├── docker-compose.yaml
-├── main.py
-├── requirements.txt
-└── README.MD
+|-- dags/
+|   |-- weather_dag.py
+|-- data/
+|   |-- bronze_olinda_weather.json
+|-- medallion/
+|   |-- bronze.py
+|   |-- silver.py
+|   |-- gold.py
+|   -- utils/
+|       -- connection.py
+|-- ml/
+|   -- preview_temperature.py
+|-- docker-compose.yaml
+|-- main.py
+|-- requirements.txt
+-- README.MD
 ```
 
 ---
 
-## ⚙️ Configuração de ambiente
+## Configuração de ambiente
 
 Crie o arquivo `config/.env` (o código lê variáveis dessa localização) com:
 
@@ -114,12 +155,18 @@ DB_NAME=airflow
 
 ---
 
-## 🚀 Como executar com Docker Compose
+## Como executar com Docker Compose
 
 ### 1) Subir os serviços
 
 ```bash
 docker compose up -d
+```
+
+Para parar os servicos:
+
+```bash
+docker compose down
 ```
 
 ### 2) Inicializar/validar containers
@@ -132,13 +179,13 @@ docker compose ps
 
 - URL: `http://localhost:8080`
 
-Ative a DAG `weather_pipeline` e execute manualmente (ou aguarde o agendamento horário).
+Ative a DAG `weather_pipeline` e execute manualmente (ou aguarde o agendamento).
 
 ---
 
-## ▶️ Execução manual (sem Airflow)
+## Execução manual (sem Airflow)
 
-Você também pode disparar Bronze + Silver diretamente:
+Você tambem pode disparar Bronze + Silver + Gold diretamente:
 
 ```bash
 python main.py
@@ -146,7 +193,7 @@ python main.py
 
 ---
 
-## 🗃️ Consultando os dados no PostgreSQL
+## Consultando os dados no PostgreSQL
 
 Entrar no container do Postgres:
 
@@ -172,9 +219,9 @@ LIMIT 10;
 
 ---
 
-## 🔍 Campos esperados na camada Silver
+## Campos esperados na camada Silver
 
-Alguns campos gerados após normalização:
+Alguns campos gerados apos normalização:
 
 - `datetime`
 - `city`
@@ -191,7 +238,7 @@ Alguns campos gerados após normalização:
 
 ---
 
-## 🧪 Dependências Python
+## Dependencias Python
 
 Instalação (execução local):
 
@@ -202,18 +249,23 @@ pip install -r requirements.txt
 Dependências principais declaradas no projeto:
 
 - `pandas`
+- `numpy`
 - `requests`
 - `python-dotenv`
 - `psycopg2-binary`
 - `sqlalchemy`
 - `pyarrow`
+- `scikit-learn`
+- `xgboost`
+- `lightgbm`
 
 ---
 
-## ⚠️ Pontos de atenção
+## Pontos de atenção
 
 - Sem `API_KEY`, a camada Bronze falha por validação.
 - Sem variáveis de banco (`DB_*`), a conexão SQLAlchemy não é criada.
-- A DAG está com `start_date` fixo em 2026 no código; ajuste se quiser retroagir/agendar diferente.
+- A DAG esta com `start_date` fixo em 2026 no código; ajuste se quiser retroagir/agendar diferente.
+- Com poucas linhas na `silver_olinda_weather`, o script de ML pode pular alguns horizontes por falta de histórico.
 
 ---

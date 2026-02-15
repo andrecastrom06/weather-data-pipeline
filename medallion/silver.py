@@ -3,6 +3,8 @@ from pathlib import Path
 import json
 import logging
 from medallion.utils.connection import engine
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy import MetaData, Table
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -97,18 +99,15 @@ def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
 def load_bd(df: pd.DataFrame):
     logging.info("Conectando ao banco de dados")
 
-    try:
-        df.to_sql(
-            name='silver_olinda_weather',
-            con=engine,
-            if_exists='append',
-            index=False,
-            method='multi'
-        )
-    except Exception as e:
-        raise ConnectionError(f"Erro ao inserir dados no banco: {e}")
+    df.to_sql(
+        "silver_olinda_weather",
+        engine,
+        if_exists="append",  
+        index=False,
+        method="multi"       
+    )
 
-    logging.info("Dados enviados para o banco com sucesso")
+    logging.info("Dados inseridos com sucesso na camada Silver")
 
 
 def silver():

@@ -7,6 +7,7 @@ sys.path.insert(0, '/opt/airflow')
 from medallion.bronze import bronze
 from medallion.silver import silver
 from medallion.gold import gold
+from medallion.ml.predict_temperature import main as ml
 
 @dag(
     dag_id='weather_pipeline',
@@ -17,7 +18,7 @@ from medallion.gold import gold
         'retry_delay': timedelta(minutes=5)
     },
     description='Pipeline clima Olinda',
-    schedule='*/5 * * * *',
+    schedule='*/10 * * * *',
     start_date=datetime(2026, 2, 11),
     catchup=False,
     tags=['weather', 'etl', 'olinda']
@@ -36,6 +37,10 @@ def dag_weather():
     def gold_layer():
         gold()
 
-    bronze_layer() >> silver_layer() >> gold_layer()
+    @task
+    def machine_learning():
+        ml()
+
+    bronze_layer() >> silver_layer() >> gold_layer() >> machine_learning()
 
 dag_weather()
