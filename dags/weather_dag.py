@@ -18,7 +18,7 @@ from medallion.ml.predict_temperature import main as ml
         'retry_delay': timedelta(minutes=5)
     },
     description='Pipeline clima Olinda',
-    schedule='*/10 * * * *',
+    schedule='*/2 * * * *',
     start_date=datetime(2026, 2, 11),
     catchup=False,
     tags=['weather', 'etl', 'olinda']

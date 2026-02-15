@@ -12,7 +12,7 @@ Este projeto coleta dados atuais de clima da API **OpenWeatherMap** para a cidad
 - **Apache Airflow 3 (CeleryExecutor)**
 - **Docker + Docker Compose**
 - **PostgreSQL 16**
-- **Redis** (broker do Celery)
+- **Redis** (Broker do Celery)
 - **Pandas**
 - **NumPy**
 - **SQLAlchemy**
@@ -23,6 +23,8 @@ Este projeto coleta dados atuais de clima da API **OpenWeatherMap** para a cidad
 - **XGBoost**
 - **LightGBM**
 - **Arquitetura Medallion**
+- **AWS**
+- **Neon DB Console**
 
 ---
 
@@ -144,14 +146,20 @@ Crie o arquivo `config/.env` (o código lê variáveis dessa localização) com:
 API_KEY=sua_chave_openweathermap
 
 # Banco de dados
-DB_USER=airflow
-DB_PASSWORD=airflow
-DB_HOST=postgres
+DB_USER=Usuário
+DB_PASSWORD=Senha
+DB_HOST=Host
 DB_PORT=5432
-DB_NAME=airflow
+DB_NAME=Nome do banco
 ```
 
 > Observação: para execução local sem Docker, ajuste `DB_HOST` para `localhost` (ou host equivalente).
+
+---
+
+## Banco de Dados
+
+Utiliza banco de dados em núvem, com serviço da AWS pelo Neon DB Console. Utilizamos PostgreSQL versão 17 na região US East 1 (N. Virginia)
 
 ---
 
