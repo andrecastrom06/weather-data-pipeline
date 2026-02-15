@@ -157,12 +157,6 @@ DB_NAME=Nome do banco
 
 ---
 
-## Banco de Dados
-
-Utiliza banco de dados em núvem, com serviço da AWS pelo Neon DB Console. Utilizamos PostgreSQL versão 17 na região US East 1 (N. Virginia)
-
----
-
 ## Como executar com Docker Compose
 
 ### 1) Subir os serviços
@@ -203,27 +197,12 @@ python main.py
 
 ## Consultando os dados no PostgreSQL
 
-Entrar no container do Postgres:
+Utiliza banco de dados em núvem, com serviço da AWS pelo Neon DB Console. Utilizamos PostgreSQL versão 17 na região US East 1 (N. Virginia)
 
-```bash
-docker exec -it etl-postgres-1 psql -U airflow -d airflow
-```
-
-Consulta rápida:
-
-```sql
-SELECT *
-FROM silver_olinda_weather
-ORDER BY datetime DESC
-LIMIT 10;
-```
-
-```sql
-SELECT *
-FROM gold_olinda_weather_daily
-ORDER BY date DESC
-LIMIT 10;
-```
+Pode consultar as tabelas:
+- Silver: `silver_olinda_weather`
+- Gold: `gold_olinda_weather_daily`
+- Machine Learning: `ml_temperature_runs` e `ml_temperature_attempts`
 
 ---
 
