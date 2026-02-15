@@ -2,29 +2,31 @@
 
 Pipeline de dados climáticos com arquitetura **Medallion (Bronze -> Silver -> Gold)**, orquestrado com **Apache Airflow** e persistido em **PostgreSQL**.
 
-Este projeto coleta dados atuais de clima da API **OpenWeatherMap** para a cidade de **Olinda/BR**, normaliza o payload JSON e grava os dados tratados em tabela relacional para análise. Finalizando com **Machine Learning** para fazer a previsão da temperatura nos próximos minutos ou horas.
+Este projeto coleta dados atuais de clima da API **OpenWeatherMap** para a cidade de **Olinda/BR**, normaliza o payload JSON e grava os dados tratados em tabela relacional para análise. Finalizando com **Machine Learning** para fazer a previsão da temperatura nos próximos minutos e horas e persistindo todos os dados em um banco de dados em nuvem usando serviços da **AWS**.
 
 ---
 
 ## Tecnologias utilizadas
 
-- **Python 3.12+**
-- **Apache Airflow 3 (CeleryExecutor)**
-- **Docker + Docker Compose**
-- **PostgreSQL 16**
-- **Redis** (Broker do Celery)
-- **Pandas**
-- **NumPy**
-- **SQLAlchemy**
-- **Requests**
-- **python-dotenv**
-- **pyarrow**
-- **scikit-learn**
-- **XGBoost**
-- **LightGBM**
-- **Arquitetura Medallion**
-- **AWS**
-- **Neon DB Console**
+### Infraestrutura
+- Docker
+- Docker Compose
+- Apache Airflow (CeleryExecutor)
+- Redis
+- PostgreSQL 17 (Neon DB Console)
+
+### Engenharia de Dados
+- Python 3.12+
+- Pandas
+- NumPy
+- SQLAlchemy
+- PyArrow
+- Requests
+
+### Machine Learning
+- scikit-learn
+- XGBoost
+- LightGBM
 
 ---
 
@@ -98,15 +100,15 @@ Foi implementado um fluxo de **previsão de temperatura de curto prazo (30, 60, 
   - `LinearRegression` (baseline)
   - `XGBoost`
   - `LightGBM`
-- Avalia com metricas:
+- Avalia com métricas:
   - `MAE` Média do erro absoluto: media(|real - previsto|).
   - `RMSE` Raiz da média do erro ao quadrado: sqrt(media((real - previsto)^2)).
 - Exibe o melhor modelo por horizonte (menor RMSE).
 
-### Como executar
+### Como executar localmente
 
 ```bash
-python ml/preview_temperature.py
+python medallion/ml/preview_temperature.py
 ```
 
 > Observação: para ter previsões estáveis, a tabela `silver_olinda_weather` precisa de histórico suficiente (na prática, várias coletas ao longo do dia).
@@ -187,7 +189,7 @@ Ative a DAG `weather_pipeline` e execute manualmente (ou aguarde o agendamento).
 
 ## Execução manual (sem Airflow)
 
-Você tambem pode disparar Bronze + Silver + Gold diretamente:
+Você também pode disparar Bronze + Silver + Gold diretamente:
 
 ```bash
 python main.py
@@ -197,7 +199,7 @@ python main.py
 
 ## Consultando os dados no PostgreSQL
 
-Utiliza banco de dados em núvem, com serviço da AWS pelo Neon DB Console. Utilizamos PostgreSQL versão 17 na região US East 1 (N. Virginia)
+Utiliza banco de dados em nuvem, com serviço da AWS pelo Neon DB Console. Utilizamos PostgreSQL versão 17 na região US East 1 (N. Virginia)
 
 Pode consultar as tabelas:
 - Silver: `silver_olinda_weather`
@@ -208,7 +210,7 @@ Pode consultar as tabelas:
 
 ## Campos esperados na camada Silver
 
-Alguns campos gerados apos normalização:
+Alguns campos gerados após normalização:
 
 - `datetime`
 - `city`
